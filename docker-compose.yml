@@ -1,0 +1,19 @@
+version: "3"
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:5000"
+    ulimits:
+      core:
+        hard: 0
+        soft: 0
+    environment:
+      API_ENV: ${API_ENV}
+      TZ: "Asia/Seoul"
+    networks:
+      - backend
+networks:
+  backend:
