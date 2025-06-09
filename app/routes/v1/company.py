@@ -26,7 +26,9 @@ def api_get_autocomplete_company(
     x_wanted_language: str = Header(default="ko"),
     session: Session = Depends(db.get_writer_db)
 ) -> AutoCompleteCompanyListResponse:
-
+    """
+    회사명 자동완성
+    """
     return get_autocomplete_company_name(query=query, language_code=x_wanted_language, session=session)
 
 
@@ -41,7 +43,9 @@ def api_get_company_detail(
     x_wanted_language: str = Header(default="ko"),
     session: Session = Depends(db.get_writer_db)
 ) -> CompanyDetailDataResponse:
-
+    """
+    회사 이름으로 회사 검색
+    """
     return get_company_detail(
         company_name=company_name,
         language_code=x_wanted_language,
@@ -60,6 +64,9 @@ def api_create_company(
     x_wanted_language: str = Header(default="ko"),
     session: Session = Depends(db.get_writer_db)
 ) -> CompanyResponse:
+    """
+    새로운 회사 추가
+    """
     return create_company(
         body=body,
         language_code=x_wanted_language,
@@ -78,6 +85,9 @@ def api_search_company_by_tag_name(
     x_wanted_language: str = Header(default="ko"),
     session: Session = Depends(db.get_writer_db)
 ):
+    """
+    태그명으로 회사 검색
+    """
     return search_company_by_tag_name(
         query=query,
         language_code=x_wanted_language,
@@ -97,6 +107,9 @@ def api_add_tags_to_company(
     x_wanted_language: str = Header(default="ko"),
     session: Session = Depends(db.get_writer_db)
 ) -> CompanyResponse:
+    """
+    회사 태그 정보 추가
+    """
     return add_tags_to_company(
         company_name=company_name,
         tags=tags,
@@ -117,6 +130,9 @@ def api_delete_company_tag(
     x_wanted_language: str = Header(default="ko"),
     session: Session = Depends(db.get_writer_db)
 ) -> CompanyResponse:
+    """
+    회사 태그 정보 삭제
+    """
     return delete_company_tag(
         company_name=company_name,
         tag_name=tag_name,

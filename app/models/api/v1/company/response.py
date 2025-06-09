@@ -37,19 +37,19 @@ class CompanyResponse(FromAttrModel):
     """
     회사 정보 반환용
     """
-    company_name: str
-    tags: List[str]
+    company_name: str = Field(title="회사명")
+    tags: List[str] = Field(title="태그 리스트")
 
 
 class CompanyItemResponse(FromAttrModel):
     """
     회사명
     """
-    company_name: str
+    company_name: str = Field(title="회사명")
 
 
 class CompanyItemListResponse(FromAttrModel):
     """
     회사명 리스트
     """
-    data: List[CompanyItemResponse]
+    data: List[CompanyItemResponse] = Field(title="회사명 리스트")

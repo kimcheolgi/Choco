@@ -14,6 +14,11 @@ def get_autocomplete_company_name(
     language_code: str,
     session: Session
 ) -> AutoCompleteCompanyListResponse:
+    """
+    회사명 자동완성
+    회사명의 일부만 들어가도 검색
+    header의 x-wanted-language 언어값에 따라 해당 언어로 출력
+    """
     stmt = (
         select(
             CompanyTranslation.name.label("company_name"),
@@ -38,6 +43,11 @@ def get_company_detail(
     language_code: str,
     session: Session
 ) -> CompanyDetailDataResponse:
+    """
+    회사 이름으로 회사 검색
+    header의 x-wanted-language 언어값에 따라 해당 언어로 출력
+    데이터가 없으면 404에러 발생
+    """
     stmt = (
         select(
             CompanyTranslation
@@ -59,7 +69,7 @@ def get_company_detail(
             CompanyTag.company_id == company_translation.company_id
         )
     )
-    tag_ids = [row[0] for row in session.execute(stmt_tags).all()]
+    tag_ids = session.execute(stmt_tags).scalars().all()
 
     if tag_ids:
         stmt_tag_names = (
@@ -89,6 +99,11 @@ def create_company(
     language_code: str,
     session: Session
 ) -> CompanyResponse:
+    """
+    새로운 회사 추가
+    새로운 언어(tw)도 같이 추가 될 수 있음
+    저장 완료후 header의 x-wanted-language 언어값에 따라 해당 언어로 출력
+    """
     new_company = Company()
     session.add(new_company)
     session.flush()
@@ -103,9 +118,9 @@ def create_company(
         )
 
     for tag in body.tags:
-        ko_value = tag.tag_name.get("ko") or next(iter(tag.tag_name.values()))
+        base_name = tag.tag_name.get("ko") or next(iter(tag.tag_name.values()))
         try:
-            tag_id = int(ko_value.replace("태그_", "").replace("tag_", ""))
+            tag_id = int("".join(filter(str.isdigit, base_name)))
         except:
             raise BadRequestEx(code="ERR40001")
 
@@ -164,22 +179,30 @@ def search_company_by_tag_name(
     query: str,
     language_code: str,
     session: Session
-):
+) -> CompanyItemListResponse:
+    """
+    태그명으로 회사 검색
+    태그로 검색 관련된 회사 검색
+    다국어로 검색 가능
+    일본어 태그로 검색을 해도 language가 ko이면 한국 회사명이 노출
+    ko언어가 없을경우 노출가능한 언어로 출력
+    동일한 회사는 한번만 노출
+    """
     tag_translation_stmt = (
         select(TagGroupTranslation.tag_group_id)
         .where(TagGroupTranslation.name == query)
     )
-    tag_group_ids = [r[0] for r in session.execute(tag_translation_stmt).all()]
+    tag_group_ids = session.execute(tag_translation_stmt).scalars().all()
     if not tag_group_ids:
-        return []
+        return CompanyItemListResponse(data=[])
 
     company_ids_stmt = (
         select(distinct(CompanyTag.company_id))
         .where(CompanyTag.tag_group_id.in_(tag_group_ids))
     )
-    company_ids = [r[0] for r in session.execute(company_ids_stmt).all()]
+    company_ids = session.execute(company_ids_stmt).scalars().all()
     if not company_ids:
-        return []
+        return CompanyItemListResponse(data=[])
 
     results = []
     for company_id in company_ids:
@@ -212,6 +235,10 @@ def add_tags_to_company(
     language_code: str,
     session: Session
 ) -> CompanyResponse:
+    """
+    회사 태그 정보 추가
+    저장 완료후 header의 x-wanted-language 언어값에 따라 해당 언어로 출력
+    """
     company_translation = session.scalar(
         select(CompanyTranslation)
         .where(CompanyTranslation.name == company_name)
@@ -223,7 +250,7 @@ def add_tags_to_company(
     for tag in tags:
         base_name = tag.tag_name.get("ko") or next(iter(tag.tag_name.values()))
         try:
-            tag_id = int(base_name.replace("태그_", "").replace("tag_", "").replace("タグ_", ""))
+            tag_id = int("".join(filter(str.isdigit, base_name)))
         except:
             raise BadRequestEx(code="ERR40001")
 
@@ -285,6 +312,10 @@ def delete_company_tag(
     language_code: str,
     session: Session
 ) -> CompanyResponse:
+    """
+    회사 태그 정보 삭제
+    저장 완료후 header의 x-wanted-language 언어값에 따라 해당 언어로 출력
+    """
     company_translation = session.scalar(
         select(CompanyTranslation)
         .where(CompanyTranslation.name == company_name)
